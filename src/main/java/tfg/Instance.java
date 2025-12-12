@@ -4,50 +4,112 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Clase que representa una instancia del problema.
- * Lee un archivo, lo procesa y guarda la información en diferentes atributos.
+ * Clase que representa una instancia del problema VRP.
+ * Lee un archivo CSV con información de vehículos y nodos, y lo procesa.
  */
 public class Instance {
     private String fileName;
-    private List<String> data;
-    private int numberOfLines;
+    private List<Map<String, String>> vehicles;
+    private List<Map<String, String>> nodes;
     private String content;
 
     /**
-     * Constructor que lee un archivo, lo procesa y guarda la información.
+     * Constructor que lee un archivo CSV, lo procesa y guarda la información.
      * 
      * @param filePath Ruta del archivo a leer
      * @throws IOException Si hay un error al leer el archivo
      */
     public Instance(String filePath) throws IOException {
         this.fileName = filePath;
-        this.data = new ArrayList<>();
+        this.vehicles = new ArrayList<>();
+        this.nodes = new ArrayList<>();
         this.content = "";
         readFile(filePath);
     }
 
     /**
-     * Método privado que lee el archivo y procesa su contenido.
+     * Método privado que lee el archivo CSV y procesa su contenido.
+     * Separa la información en dos secciones: vehículos y nodos.
      * 
      * @param filePath Ruta del archivo a leer
      * @throws IOException Si hay un error al leer el archivo
      */
     private void readFile(String filePath) throws IOException {
         StringBuilder contentBuilder = new StringBuilder();
+        List<String> lines = new ArrayList<>();
         
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
-                data.add(line);
-                contentBuilder.append(line).append("\n");
+                if (!line.trim().isEmpty()) {
+                    lines.add(line);
+                    contentBuilder.append(line).append("\n");
+                }
             }
         }
         
         this.content = contentBuilder.toString();
-        this.numberOfLines = data.size();
+        parseCSV(lines);
+    }
+
+    /**
+     * Parsea el CSV separando vehículos y nodos.
+     * 
+     * @param lines Lista de líneas del archivo
+     */
+    private void parseCSV(List<String> lines) {
+        String[] vehicleHeaders = null;
+        String[] nodeHeaders = null;
+        boolean parsingVehicles = false;
+        boolean parsingNodes = false;
+
+        for (String line : lines) {
+            String[] parts = line.split(",");
+            
+            // Saltar líneas vacías
+            if (parts.length == 0 || parts[0].trim().isEmpty()) {
+                continue;
+            }
+
+            // Detectar sección de vehículos
+            if (parts[0].trim().equals("Vehicle")) {
+                vehicleHeaders = parts;
+                parsingVehicles = true;
+                parsingNodes = false;
+                continue;
+            }
+
+            // Detectar sección de nodos
+            if (parts[0].trim().equals("Node")) {
+                nodeHeaders = parts;
+                parsingVehicles = false;
+                parsingNodes = true;
+                continue;
+            }
+
+            // Procesar vehículos
+            if (parsingVehicles && vehicleHeaders != null && !parts[0].trim().isEmpty()) {
+                Map<String, String> vehicle = new HashMap<>();
+                for (int i = 0; i < vehicleHeaders.length && i < parts.length; i++) {
+                    vehicle.put(vehicleHeaders[i].trim(), parts[i].trim());
+                }
+                vehicles.add(vehicle);
+            }
+
+            // Procesar nodos
+            if (parsingNodes && nodeHeaders != null && !parts[0].trim().isEmpty()) {
+                Map<String, String> node = new HashMap<>();
+                for (int i = 0; i < nodeHeaders.length && i < parts.length; i++) {
+                    node.put(nodeHeaders[i].trim(), parts[i].trim());
+                }
+                nodes.add(node);
+            }
+        }
     }
 
     /**
@@ -60,21 +122,39 @@ public class Instance {
     }
 
     /**
-     * Obtiene las líneas de datos leídas del archivo.
+     * Obtiene la lista de vehículos parseados.
      * 
-     * @return Lista de líneas
+     * @return Lista de mapas con información de vehículos
      */
-    public List<String> getData() {
-        return new ArrayList<>(data);
+    public List<Map<String, String>> getVehicles() {
+        return new ArrayList<>(vehicles);
     }
 
     /**
-     * Obtiene el número de líneas leídas.
+     * Obtiene la lista de nodos parseados.
      * 
-     * @return Número de líneas
+     * @return Lista de mapas con información de nodos
      */
-    public int getNumberOfLines() {
-        return numberOfLines;
+    public List<Map<String, String>> getNodes() {
+        return new ArrayList<>(nodes);
+    }
+
+    /**
+     * Obtiene el número de vehículos.
+     * 
+     * @return Número de vehículos
+     */
+    public int getNumberOfVehicles() {
+        return vehicles.size();
+    }
+
+    /**
+     * Obtiene el número de nodos.
+     * 
+     * @return Número de nodos
+     */
+    public int getNumberOfNodes() {
+        return nodes.size();
     }
 
     /**
@@ -90,7 +170,8 @@ public class Instance {
     public String toString() {
         return "Instance{" +
                 "fileName='" + fileName + '\'' +
-                ", numberOfLines=" + numberOfLines +
+                ", vehículos=" + vehicles.size() +
+                ", nodos=" + nodes.size() +
                 '}';
     }
 }

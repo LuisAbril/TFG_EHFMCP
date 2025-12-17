@@ -55,44 +55,64 @@ public class RandomConstructive {
             }
         }
 
-        // Obtener lista de vehículos disponibles
+        // Obtener lista de vehículos disponibles y capacidades por unidad
         List<String> availableVehicles = new ArrayList<>();
+        Map<String, Double> vehicleCapacityByUnit = new java.util.HashMap<>();
         for (Map<String, String> vehicle : vehicles) {
             String vehicleName = vehicle.get("Vehicle");
             int numVehicles = Integer.parseInt(vehicle.get("Num_v"));
-            
-            // Añadir cada unidad del vehículo
+            double capacity = Double.parseDouble(vehicle.get("Load"));
+
             for (int i = 0; i < numVehicles; i++) {
-                availableVehicles.add(vehicleName + (i > 0 ? "_" + i : ""));
+                String unitName = vehicleName + (i > 0 ? "_" + i : "");
+                availableVehicles.add(unitName);
+                vehicleCapacityByUnit.put(unitName, capacity);
             }
         }
 
+        // Cargar actual por vehículo unidad
+        Map<String, Double> routeLoadByVehicle = new java.util.HashMap<>();
+
         // Asignar aleatoriamente nodos a vehículos
-        int vehicleIndex = 0;
         for (String node : customerNodes) {
             if (availableVehicles.isEmpty()) {
-                break;
+                throw new IllegalStateException("No hay vehículos disponibles para asignar todos los nodos");
             }
 
-            // Seleccionar un vehículo aleatorio
-            int randomVehicleIndex = random.nextInt(availableVehicles.size());
-            String vehicle = availableVehicles.get(randomVehicleIndex);
-
-            // Obtener la ruta actual del vehículo o crear una nueva
-            Map<String, List<String>> routes = solution.getVehicleRoutes();
-            List<String> route;
-            
-            if (routes.containsKey(vehicle)) {
-                route = routes.get(vehicle);
-            } else {
-                route = new ArrayList<>();
+            // Peso (producción) del nodo
+            double nodeProd = 0.0;
+            for (Map<String, String> n : nodes) {
+                if (node.equals(n.get("Node"))) {
+                    String prodStr = n.get("prod");
+                    nodeProd = (prodStr == null || prodStr.isEmpty()) ? 0.0 : Double.parseDouble(prodStr);
+                    break;
+                }
             }
 
-            // Añadir el nodo a la ruta
-            route.add(node);
+            // Intentar asignar el nodo a un vehículo que no exceda la capacidad
+            boolean assigned = false;
+            int attempts = 0;
+            while (!assigned && attempts < availableVehicles.size()) {
+                int randomVehicleIndex = random.nextInt(availableVehicles.size());
+                String vehicleUnit = availableVehicles.get(randomVehicleIndex);
+                double capacity = vehicleCapacityByUnit.get(vehicleUnit);
+                double currentLoad = routeLoadByVehicle.getOrDefault(vehicleUnit, 0.0);
 
-            // Actualizar la ruta en la solución
-            solution.addRoute(vehicle, route);
+                if (currentLoad + nodeProd <= capacity + 1e-9) { // permitir pequeña tolerancia
+                    Map<String, List<String>> routes = solution.getVehicleRoutes();
+                    List<String> route = routes.getOrDefault(vehicleUnit, new ArrayList<>());
+                    route.add(node);
+                    solution.addRoute(vehicleUnit, route);
+                    routeLoadByVehicle.put(vehicleUnit, currentLoad + nodeProd);
+                    assigned = true;
+                } else {
+                    attempts++;
+                }
+            }
+
+            if (!assigned) {
+                throw new IllegalStateException("Capacidad insuficiente: no se puede asignar el nodo " + node);
+            }
         }
 
         // Evaluar la solución

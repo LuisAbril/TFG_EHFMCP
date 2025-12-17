@@ -155,30 +155,41 @@ public class Solution {
 
                 // Calcular distancia de la ruta (desde P a primer nodo, entre nodos, y volver a P)
                 if (!route.isEmpty()) {
-                    // P a primer nodo
+                    // Calcular el peso total que debe recoger este vehículo
+                    double totalWeight = 0.0;
+                    for (String nodeName : route) {
+                        totalWeight += getNodeProd(nodeName, nodes);
+                    }
+                    
+                    // P a primer nodo (sale vacío, llega y recoge)
                     double[] depotCoords = coordinates.get("P");
                     double[] firstNodeCoords = coordinates.get(route.get(0));
                     double dPF = calculateDistance(depotCoords, firstNodeCoords);
                     totalDist += dPF;
-                    double firstWeight = getNodeProd(route.get(0), nodes);
-                    totalEmissions += ((Ef - Eo) / capacity) * firstWeight * dPF + Eo;
+                    // Sale vacío desde P: peso = 0
+                    totalEmissions += ((Ef - Eo) / capacity) * 0.0 * dPF + Eo * dPF;
+                    
+                    // Peso acumulado después de recoger en el primer nodo
+                    double currentWeight = getNodeProd(route.get(0), nodes);
 
-                    // Entre nodos
+                    // Entre nodos consecutivos
                     for (int i = 0; i < route.size() - 1; i++) {
                         double[] currentCoords = coordinates.get(route.get(i));
                         double[] nextCoords = coordinates.get(route.get(i + 1));
                         double dNN = calculateDistance(currentCoords, nextCoords);
                         totalDist += dNN;
-                        double legWeight = getNodeProd(route.get(i + 1), nodes);
-                        totalEmissions += ((Ef - Eo) / capacity) * legWeight * dNN + Eo;
+                        // Viaja con el peso acumulado hasta ahora
+                        totalEmissions += ((Ef - Eo) / capacity) * currentWeight * dNN + Eo * dNN;
+                        // Después de visitar el siguiente nodo, acumula su peso
+                        currentWeight += getNodeProd(route.get(i + 1), nodes);
                     }
 
-                    // Último nodo a P
+                    // Último nodo a P (vuelve con todo el peso recogido)
                     double[] lastNodeCoords = coordinates.get(route.get(route.size() - 1));
                     double dLP = calculateDistance(lastNodeCoords, depotCoords);
                     totalDist += dLP;
-                    // Vuelta al depósito con carga 0 según descripción: añade solo Eo
-                    totalEmissions += ((Ef - Eo) / capacity) * 0.0 * dLP + Eo;
+                    // Vuelve al depósito con todo el peso recogido
+                    totalEmissions += ((Ef - Eo) / capacity) * totalWeight * dLP + Eo * dLP;
                 }
             }
         }

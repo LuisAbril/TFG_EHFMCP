@@ -1,0 +1,27 @@
+Sprint2 TFG
+
+1.- 
+Generar un Excel que contenga varias columnas que cada columna es un experimento
+cada fila es una instancia
+
+Columna en rojo con los datos del CO2 del artículo
+
+Otra columna con el mejor resultado para esa instancia
+
+Para mis experimentos otra columna parecida con mis resultados
+
+Añadir columnas de desviación en mis resultados y en los del articulo (
+
+
+OBJETIVO al final del excel:
+	Cuadrado con el promedio de la función objetivo para calcular con los reportes del artículo
+
+	Informar cuantas instancias tienen 0,00 de desviación
+
+2.- Desarrollar una función que mejore nuestras soluciones:
+	Procedimiento de búsqueda local, 2OPT (permutar dos de los arcos) (con la ruta que se nos ha generado aleatoriamente, empezar a cruzar todas las aristas de los nodos con el objetivo de probar nuevas distancias de rutas.
+	Si mejora la solución se vuelven a permutar todos los arcos.
+
+100 randoms
+1 random con mejora
+100 randoms con mejora

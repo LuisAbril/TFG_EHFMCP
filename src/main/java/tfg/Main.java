@@ -101,17 +101,53 @@ public class Main {
             // Establecer la instancia en Solution
             Solution.setInstance(instance);
             
-            // Crear el algoritmo de construcción aleatoria en este caso
-            RandomConstructive constructive = new RandomConstructive(instance);
+            // Ejecutar el algoritmo 100 veces y quedarse con la mejor solución
+            int iterations = 100;
+            Solution bestSolution = null;
+            double bestCO2 = Double.MAX_VALUE;
             
-            // Generar solución aleatoria y evaluarla
-            Solution solution = constructive.run();
+            System.out.println();
+            System.out.println("╔════════════════════════════════════════════╗");
+            System.out.println("║  EJECUTANDO 100 ITERACIONES DEL ALGORITMO  ║");
+            System.out.println("╚════════════════════════════════════════════╝");
+            System.out.println();
             
-            // Mostrar información de la solución
+            for (int i = 1; i <= iterations; i++) {
+                RandomConstructive constructive = new RandomConstructive(instance);
+                Solution solution = constructive.run();
+                
+                double solutionCO2 = solution.getTotalCO2();
+                
+                if (solutionCO2 < bestCO2) {
+                    bestCO2 = solutionCO2;
+                    bestSolution = solution;
+                    System.out.println("Iteración " + i + ": Nueva mejor solución encontrada - CO2: " + String.format("%.7f", solutionCO2));
+                } else if (i % 20 == 0) {
+                    System.out.println("Iteración " + i + ": CO2: " + String.format("%.7f", solutionCO2) + " (mejor actual: " + String.format("%.7f", bestCO2) + ")");
+                }
+            }
+            
+            System.out.println();
+            System.out.println("═════════════════════════════════════════════");
+            System.out.println("Mejor solución encontrada en 100 iteraciones:");
+            System.out.println("CO2: " + String.format("%.7f", bestCO2));
+            System.out.println("═════════════════════════════════════════════");
+            System.out.println();
+            
+            // Guardar la mejor solución en un archivo
+            try {
+                bestSolution.saveToFile(instanceName);
+                System.out.println("Mejor solución guardada en: " + instanceName + "_sol.txt");
+            } catch (IOException e) {
+                System.err.println("Error al guardar la solución: " + e.getMessage());
+            }
+            System.out.println();
+            
+            // Mostrar información de la mejor solución
             System.out.println("╔════════════════════════════════════════════╗");
             System.out.println("║         INFORMACIÓN DE LA SOLUCIÓN         ║");
             System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println(solution);
+            System.out.println(bestSolution);
             System.out.println();
             
         } catch (IOException e) {

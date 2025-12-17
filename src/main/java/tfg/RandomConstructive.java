@@ -1,6 +1,7 @@
 package tfg;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -55,6 +56,9 @@ public class RandomConstructive {
             }
         }
 
+        // Barajar el orden de visita de las granjas para que la asignación sea completamente aleatoria
+        Collections.shuffle(customerNodes, random);
+
         // Obtener lista de vehículos disponibles y capacidades por unidad
         List<String> availableVehicles = new ArrayList<>();
         Map<String, Double> vehicleCapacityByUnit = new java.util.HashMap<>();
@@ -91,8 +95,11 @@ public class RandomConstructive {
 
             // Intentar asignar el nodo a un vehículo que no exceda la capacidad
             boolean assigned = false;
+            
+            // Primero: intentar aleatoriamente para mantener la aleatoriedad
             int attempts = 0;
-            while (!assigned && attempts < availableVehicles.size()) {
+            int maxRandomAttempts = availableVehicles.size() * 2;
+            while (!assigned && attempts < maxRandomAttempts) {
                 int randomVehicleIndex = random.nextInt(availableVehicles.size());
                 String vehicleUnit = availableVehicles.get(randomVehicleIndex);
                 double capacity = vehicleCapacityByUnit.get(vehicleUnit);
@@ -107,6 +114,24 @@ public class RandomConstructive {
                     assigned = true;
                 } else {
                     attempts++;
+                }
+            }
+            
+            // Si no se asignó aleatoriamente, buscar sistemáticamente el primer vehículo con espacio
+            if (!assigned) {
+                for (String vehicleUnit : availableVehicles) {
+                    double capacity = vehicleCapacityByUnit.get(vehicleUnit);
+                    double currentLoad = routeLoadByVehicle.getOrDefault(vehicleUnit, 0.0);
+                    
+                    if (currentLoad + nodeProd <= capacity + 1e-9) {
+                        Map<String, List<String>> routes = solution.getVehicleRoutes();
+                        List<String> route = routes.getOrDefault(vehicleUnit, new ArrayList<>());
+                        route.add(node);
+                        solution.addRoute(vehicleUnit, route);
+                        routeLoadByVehicle.put(vehicleUnit, currentLoad + nodeProd);
+                        assigned = true;
+                        break;
+                    }
                 }
             }
 

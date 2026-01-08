@@ -112,6 +112,10 @@ public class Main {
             System.out.println("╚════════════════════════════════════════════╝");
             System.out.println();
             
+            // Medir tiempo de CPU
+            long startTime = System.currentTimeMillis();
+            long startNanoTime = System.nanoTime();
+            
             for (int i = 1; i <= iterations; i++) {
                 RandomConstructive constructive = new RandomConstructive(instance);
                 Solution solution = constructive.run();
@@ -127,10 +131,22 @@ public class Main {
                 }
             }
             
+            // Calcular tiempo transcurrido
+            long endTime = System.currentTimeMillis();
+            long endNanoTime = System.nanoTime();
+            long elapsedMillis = endTime - startTime;
+            long elapsedNanos = endNanoTime - startNanoTime;
+            double elapsedSeconds = elapsedNanos / 1_000_000_000.0;
+            
             System.out.println();
             System.out.println("═════════════════════════════════════════════");
             System.out.println("Mejor solución encontrada en 100 iteraciones:");
             System.out.println("CO2: " + String.format("%.7f", bestCO2));
+            System.out.println("═════════════════════════════════════════════");
+            System.out.println("⏱️  TIEMPO DE EJECUCIÓN:");
+            System.out.println("    • Milisegundos: " + elapsedMillis + " ms");
+            System.out.println("    • Segundos: " + String.format("%.3f", elapsedSeconds) + " s");
+            System.out.println("    • Tiempo por iteración: " + String.format("%.3f", elapsedSeconds / iterations) + " s");
             System.out.println("═════════════════════════════════════════════");
             System.out.println();
             

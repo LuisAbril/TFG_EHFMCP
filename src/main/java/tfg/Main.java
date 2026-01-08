@@ -95,49 +95,73 @@ public class Main {
             // Establecer la instancia en Solution
             Solution.setInstance(instance);
             
+            // Solicitar número de iteraciones
+            int iterations = 100;
+            boolean validIterations = false;
+            while (!validIterations) {
+                System.out.print("Ingresa el número de iteraciones (default 1): ");
+                String iterInput = scanner.nextLine().trim();
+                if (iterInput.isEmpty()) {
+                    iterations = 1;
+                    validIterations = true;
+                } else {
+                    try {
+                        iterations = Integer.parseInt(iterInput);
+                        if (iterations < 1) {
+                            System.out.println("Las iteraciones deben ser al menos 1.");
+                            continue;
+                        }
+                        validIterations = true;
+                    } catch (NumberFormatException e) {
+                        System.out.println("Entrada inválida. Ingresa un número válido.");
+                    }
+                }
+            }
+            System.out.println();
+            
             // Medir tiempo de CPU
             long startTime = System.currentTimeMillis();
             long startNanoTime = System.nanoTime();
             
-            System.out.println();
             System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║     FASE 1: CONSTRUCCIÓN ALEATORIA         ║");
+            System.out.println("║  EJECUTANDO " + String.format("%d", iterations) + " ITERACIONES DEL ALGORITMO  ║");
             System.out.println("╚════════════════════════════════════════════╝");
             System.out.println();
             
-            // Fase 1: Ejecutar Random Constructive
-            RandomConstructive constructive = new RandomConstructive(instance);
-            Solution initialSolution = constructive.run();
-            double initialCO2 = initialSolution.getTotalCO2();
-            double initialDistance = initialSolution.getTotalDistance();
-            
-            System.out.println("✓ Solución inicial generada");
-            System.out.println("  CO2 inicial: " + String.format("%.7f", initialCO2));
-            System.out.println("  Distancia inicial: " + String.format("%.6f", initialDistance));
-            System.out.println();
-            
-            // Fase 2: Aplicar Local Search (2-Opt)
-            System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║     FASE 2: BÚSQUEDA LOCAL (2-OPT)         ║");
-            System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println();
-            
+            // Variables para rastrear la mejor solución global
+            Solution bestSolution = null;
+            double bestCO2 = Double.MAX_VALUE;
+            double bestDistance = 0.0;
             LocalSearch localSearch = new LocalSearch();
-            Solution improvedSolution = localSearch.apply2Opt(initialSolution);
-            double improvedCO2 = improvedSolution.getTotalCO2();
-            double improvedDistance = improvedSolution.getTotalDistance();
             
-            double co2Improvement = ((initialCO2 - improvedCO2) / initialCO2) * 100;
-            double distanceImprovement = ((initialDistance - improvedDistance) / initialDistance) * 100;
-            
-            System.out.println("✓ Búsqueda local completada");
-            System.out.println("  CO2 mejorado: " + String.format("%.7f", improvedCO2));
-            System.out.println("  Distancia mejorada: " + String.format("%.6f", improvedDistance));
-            System.out.println();
-            System.out.println("📊 MEJORAS CONSEGUIDAS:");
-            System.out.println("  CO2: " + String.format("%.2f%%", co2Improvement) + " (" + String.format("%.7f", initialCO2 - improvedCO2) + ")");
-            System.out.println("  Distancia: " + String.format("%.2f%%", distanceImprovement) + " (" + String.format("%.6f", initialDistance - improvedDistance) + ")");
-            System.out.println();
+            for (int iter = 1; iter <= iterations; iter++) {
+                System.out.println("--- Iteración " + iter + " / " + iterations + " ---");
+                
+                // Fase 1: Construcción Aleatoria
+                RandomConstructive constructive = new RandomConstructive(instance);
+                Solution initialSolution = constructive.run();
+                double initialCO2 = initialSolution.getTotalCO2();
+                
+                // Fase 2: Búsqueda Local (2-Opt)
+                Solution improvedSolution = localSearch.apply2Opt(initialSolution);
+                double improvedCO2 = improvedSolution.getTotalCO2();
+                double improvedDistance = improvedSolution.getTotalDistance();
+                
+                // Mostrar resultado de esta iteración
+                double co2Improvement = ((initialCO2 - improvedCO2) / initialCO2) * 100;
+                System.out.println("  CO2 inicial:   " + String.format("%.7f", initialCO2));
+                System.out.println("  CO2 mejorado:  " + String.format("%.7f", improvedCO2));
+                System.out.println("  Mejora: " + String.format("%.2f%%", co2Improvement));
+                
+                // Verificar si es la mejor solución encontrada hasta ahora
+                if (improvedCO2 < bestCO2) {
+                    bestCO2 = improvedCO2;
+                    bestDistance = improvedDistance;
+                    bestSolution = improvedSolution;
+                    System.out.println("  ★ NUEVA MEJOR SOLUCIÓN");
+                }
+                System.out.println();
+            }
             
             // Calcular tiempo transcurrido
             long endTime = System.currentTimeMillis();
@@ -147,8 +171,9 @@ public class Main {
             double elapsedSeconds = elapsedNanos / 1_000_000_000.0;
             
             System.out.println("═════════════════════════════════════════════");
-            System.out.println("Solución final después de Local Search:");
-            System.out.println("CO2: " + String.format("%.7f", improvedCO2));
+            System.out.println("Mejor solución encontrada en " + iterations + " iteraciones:");
+            System.out.println("CO2: " + String.format("%.7f", bestCO2));
+            System.out.println("Distancia: " + String.format("%.6f", bestDistance));
             System.out.println("═════════════════════════════════════════════");
             System.out.println("⏱️  TIEMPO DE EJECUCIÓN:");
             System.out.println("    • Milisegundos: " + elapsedMillis + " ms");
@@ -158,8 +183,8 @@ public class Main {
             
             // Guardar la mejor solución en un archivo
             try {
-                improvedSolution.saveToFile(instanceName);
-                System.out.println("Solución guardada en: " + instanceName + "_sol.txt");
+                bestSolution.saveToFile(instanceName);
+                System.out.println("Mejor solución guardada en: " + instanceName + "_sol.txt");
             } catch (IOException e) {
                 System.err.println("Error al guardar la solución: " + e.getMessage());
             }
@@ -167,9 +192,9 @@ public class Main {
             
             // Mostrar información de la mejor solución
             System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║         INFORMACIÓN DE LA SOLUCIÓN         ║");
+            System.out.println("║    INFORMACIÓN DE LA MEJOR SOLUCIÓN        ║");
             System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println(improvedSolution);
+            System.out.println(bestSolution);
             System.out.println();
             
         } catch (IOException e) {

@@ -125,16 +125,13 @@ public class Solution {
         double totalDist = 0.0;
         double totalEmissions = 0.0;
 
-        List<Map<String, String>> nodes = instance.getNodes();
-        List<Map<String, String>> vehicles = instance.getVehicles();
+        List<NodeData> nodes = instance.getNodes();
+        List<Vehicle> vehicles = instance.getVehicles();
         
         // Crear mapa de coordenadas para acceso rápido
-        Map<String, double[]> coordinates = new HashMap<>();
-        for (Map<String, String> node : nodes) {
-            String nodeName = node.get("Node");
-            double x = Double.parseDouble(node.get("coord_x"));
-            double y = Double.parseDouble(node.get("coord_y"));
-            coordinates.put(nodeName, new double[]{x, y});
+        Map<String, double[]> coordinates = new java.util.HashMap<>();
+        for (NodeData node : nodes) {
+            coordinates.put(node.getName(), new double[]{node.getX(), node.getY()});
         }
 
         // Para cada vehículo y su ruta, calcular distancia y emisiones
@@ -143,18 +140,18 @@ public class Solution {
             List<String> route = routeEntry.getValue();
 
             // Encontrar el vehículo en la instancia
-            Map<String, String> vehicleInfo = null;
-            for (Map<String, String> v : vehicles) {
-                if (v.get("Vehicle").equals(vehicleName)) {
+            Vehicle vehicleInfo = null;
+            for (Vehicle v : vehicles) {
+                if (vehicleName.equals(v.getName()) || vehicleName.startsWith(v.getName() + "_")) {
                     vehicleInfo = v;
                     break;
                 }
             }
 
             if (vehicleInfo != null) {
-                double Ef = Double.parseDouble(vehicleInfo.get("Ef"));
-                double Eo = Double.parseDouble(vehicleInfo.get("Eo"));
-                double capacity = Double.parseDouble(vehicleInfo.get("Load"));
+                double Ef = vehicleInfo.getEf();
+                double Eo = vehicleInfo.getEo();
+                double capacity = vehicleInfo.getLoad();
 
                 // Calcular distancia de la ruta (desde P a primer nodo, entre nodos, y volver a P)
                 if (!route.isEmpty()) {
@@ -212,18 +209,10 @@ public class Solution {
     /**
      * Obtiene la producción/demanda del nodo por nombre.
      */
-    private double getNodeProd(String nodeName, List<Map<String, String>> nodes) {
-        for (Map<String, String> n : nodes) {
-            if (nodeName.equals(n.get("Node"))) {
-                String prodStr = n.get("prod");
-                if (prodStr == null || prodStr.isEmpty()) {
-                    return 0.0;
-                }
-                try {
-                    return Double.parseDouble(prodStr);
-                } catch (NumberFormatException e) {
-                    return 0.0;
-                }
+    private double getNodeProd(String nodeName, List<NodeData> nodes) {
+        for (NodeData n : nodes) {
+            if (nodeName.equals(n.getName())) {
+                return n.getProd();
             }
         }
         return 0.0;

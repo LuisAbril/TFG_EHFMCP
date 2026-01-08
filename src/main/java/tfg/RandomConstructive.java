@@ -44,13 +44,13 @@ public class RandomConstructive {
         Solution solution = new Solution();
 
         // Obtener información de la instancia
-        List<Map<String, String>> nodes = instance.getNodes();
-        List<Map<String, String>> vehicles = instance.getVehicles();
+        List<NodeData> nodes = instance.getNodes();
+        List<Vehicle> vehicles = instance.getVehicles();
 
         // Filtrar nodos (excluir el depósito 'P')
         List<String> customerNodes = new ArrayList<>();
-        for (Map<String, String> node : nodes) {
-            String nodeName = node.get("Node");
+        for (NodeData node : nodes) {
+            String nodeName = node.getName();
             if (!nodeName.equals("P")) {
                 customerNodes.add(nodeName);
             }
@@ -62,10 +62,10 @@ public class RandomConstructive {
         // Obtener lista de vehículos disponibles y capacidades por unidad
         List<String> availableVehicles = new ArrayList<>();
         Map<String, Double> vehicleCapacityByUnit = new java.util.HashMap<>();
-        for (Map<String, String> vehicle : vehicles) {
-            String vehicleName = vehicle.get("Vehicle");
-            int numVehicles = Integer.parseInt(vehicle.get("Num_v"));
-            double capacity = Double.parseDouble(vehicle.get("Load"));
+        for (Vehicle vehicle : vehicles) {
+            String vehicleName = vehicle.getName();
+            int numVehicles = vehicle.getNumUnits();
+            double capacity = vehicle.getLoad();
 
             for (int i = 0; i < numVehicles; i++) {
                 String unitName = vehicleName + (i > 0 ? "_" + i : "");
@@ -85,10 +85,9 @@ public class RandomConstructive {
 
             // Peso (producción) del nodo
             double nodeProd = 0.0;
-            for (Map<String, String> n : nodes) {
-                if (node.equals(n.get("Node"))) {
-                    String prodStr = n.get("prod");
-                    nodeProd = (prodStr == null || prodStr.isEmpty()) ? 0.0 : Double.parseDouble(prodStr);
+            for (NodeData n : nodes) {
+                if (node.equals(n.getName())) {
+                    nodeProd = n.getProd();
                     break;
                 }
             }

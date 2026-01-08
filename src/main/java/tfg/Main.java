@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -71,29 +70,24 @@ public class Main {
             
             // Mostrar información de vehículos
             System.out.println("┌─ VEHÍCULOS ─────────────────────────────────┐");
-            List<Map<String, String>> vehicles = instance.getVehicles();
-            for (Map<String, String> vehicle : vehicles) {
-                System.out.println("├─ " + vehicle.get("Vehicle"));
-                System.out.println("│  ├─ Capacidad: " + vehicle.get("Load") + " kg");
-                System.out.println("│  ├─ Unidades: " + vehicle.get("Num_v"));
-                System.out.println("│  ├─ Emisiones lleno (Ef): " + vehicle.get("Ef"));
-                System.out.println("│  └─ Emisiones vacío (Eo): " + vehicle.get("Eo"));
+            List<Vehicle> vehicles = instance.getVehicles();
+            for (Vehicle vehicle : vehicles) {
+                System.out.println("├─ " + vehicle.getName());
+                System.out.println("│  ├─ Capacidad: " + vehicle.getLoad() + " kg");
+                System.out.println("│  ├─ Unidades: " + vehicle.getNumUnits());
+                System.out.println("│  ├─ Emisiones lleno (Ef): " + vehicle.getEf());
+                System.out.println("│  └─ Emisiones vacío (Eo): " + vehicle.getEo());
             }
             System.out.println("└─────────────────────────────────────────────┘");
             System.out.println();
             
             // Mostrar información de nodos
             System.out.println("┌─ NODOS ─────────────────────────────────────┐");
-            List<Map<String, String>> nodes = instance.getNodes();
-            for (Map<String, String> node : nodes) {
-                String nodeName = node.get("Node");
-                String coordX = node.get("coord_x");
-                String coordY = node.get("coord_y");
-                String prod = node.get("prod");
-                
-                System.out.println("├─ " + nodeName);
-                System.out.println("│  ├─ Coordenadas: (" + coordX + ", " + coordY + ")");
-                System.out.println("│  └─ Producción/Demanda: " + prod);
+            List<NodeData> nodes = instance.getNodes();
+            for (NodeData node : nodes) {
+                System.out.println("├─ " + node.getName());
+                System.out.println("│  ├─ Coordenadas: (" + node.getX() + ", " + node.getY() + ")");
+                System.out.println("│  └─ Producción/Demanda: " + node.getProd());
             }
             System.out.println("└─────────────────────────────────────────────┘");
             System.out.println();
@@ -101,35 +95,49 @@ public class Main {
             // Establecer la instancia en Solution
             Solution.setInstance(instance);
             
-            // Ejecutar el algoritmo 100 veces y quedarse con la mejor solución
-            int iterations = 100;
-            Solution bestSolution = null;
-            double bestCO2 = Double.MAX_VALUE;
-            
-            System.out.println();
-            System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║  EJECUTANDO 100 ITERACIONES DEL ALGORITMO  ║");
-            System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println();
-            
             // Medir tiempo de CPU
             long startTime = System.currentTimeMillis();
             long startNanoTime = System.nanoTime();
             
-            for (int i = 1; i <= iterations; i++) {
-                RandomConstructive constructive = new RandomConstructive(instance);
-                Solution solution = constructive.run();
-                
-                double solutionCO2 = solution.getTotalCO2();
-                
-                if (solutionCO2 < bestCO2) {
-                    bestCO2 = solutionCO2;
-                    bestSolution = solution;
-                    System.out.println("Iteración " + i + ": Nueva mejor solución encontrada - CO2: " + String.format("%.7f", solutionCO2));
-                } else if (i % 20 == 0) {
-                    System.out.println("Iteración " + i + ": CO2: " + String.format("%.7f", solutionCO2) + " (mejor actual: " + String.format("%.7f", bestCO2) + ")");
-                }
-            }
+            System.out.println();
+            System.out.println("╔════════════════════════════════════════════╗");
+            System.out.println("║     FASE 1: CONSTRUCCIÓN ALEATORIA         ║");
+            System.out.println("╚════════════════════════════════════════════╝");
+            System.out.println();
+            
+            // Fase 1: Ejecutar Random Constructive
+            RandomConstructive constructive = new RandomConstructive(instance);
+            Solution initialSolution = constructive.run();
+            double initialCO2 = initialSolution.getTotalCO2();
+            double initialDistance = initialSolution.getTotalDistance();
+            
+            System.out.println("✓ Solución inicial generada");
+            System.out.println("  CO2 inicial: " + String.format("%.7f", initialCO2));
+            System.out.println("  Distancia inicial: " + String.format("%.6f", initialDistance));
+            System.out.println();
+            
+            // Fase 2: Aplicar Local Search (2-Opt)
+            System.out.println("╔════════════════════════════════════════════╗");
+            System.out.println("║     FASE 2: BÚSQUEDA LOCAL (2-OPT)         ║");
+            System.out.println("╚════════════════════════════════════════════╝");
+            System.out.println();
+            
+            LocalSearch localSearch = new LocalSearch();
+            Solution improvedSolution = localSearch.apply2Opt(initialSolution);
+            double improvedCO2 = improvedSolution.getTotalCO2();
+            double improvedDistance = improvedSolution.getTotalDistance();
+            
+            double co2Improvement = ((initialCO2 - improvedCO2) / initialCO2) * 100;
+            double distanceImprovement = ((initialDistance - improvedDistance) / initialDistance) * 100;
+            
+            System.out.println("✓ Búsqueda local completada");
+            System.out.println("  CO2 mejorado: " + String.format("%.7f", improvedCO2));
+            System.out.println("  Distancia mejorada: " + String.format("%.6f", improvedDistance));
+            System.out.println();
+            System.out.println("📊 MEJORAS CONSEGUIDAS:");
+            System.out.println("  CO2: " + String.format("%.2f%%", co2Improvement) + " (" + String.format("%.7f", initialCO2 - improvedCO2) + ")");
+            System.out.println("  Distancia: " + String.format("%.2f%%", distanceImprovement) + " (" + String.format("%.6f", initialDistance - improvedDistance) + ")");
+            System.out.println();
             
             // Calcular tiempo transcurrido
             long endTime = System.currentTimeMillis();
@@ -138,22 +146,20 @@ public class Main {
             long elapsedNanos = endNanoTime - startNanoTime;
             double elapsedSeconds = elapsedNanos / 1_000_000_000.0;
             
-            System.out.println();
             System.out.println("═════════════════════════════════════════════");
-            System.out.println("Mejor solución encontrada en 100 iteraciones:");
-            System.out.println("CO2: " + String.format("%.7f", bestCO2));
+            System.out.println("Solución final después de Local Search:");
+            System.out.println("CO2: " + String.format("%.7f", improvedCO2));
             System.out.println("═════════════════════════════════════════════");
             System.out.println("⏱️  TIEMPO DE EJECUCIÓN:");
             System.out.println("    • Milisegundos: " + elapsedMillis + " ms");
             System.out.println("    • Segundos: " + String.format("%.3f", elapsedSeconds) + " s");
-            System.out.println("    • Tiempo por iteración: " + String.format("%.3f", elapsedSeconds / iterations) + " s");
             System.out.println("═════════════════════════════════════════════");
             System.out.println();
             
             // Guardar la mejor solución en un archivo
             try {
-                bestSolution.saveToFile(instanceName);
-                System.out.println("Mejor solución guardada en: " + instanceName + "_sol.txt");
+                improvedSolution.saveToFile(instanceName);
+                System.out.println("Solución guardada en: " + instanceName + "_sol.txt");
             } catch (IOException e) {
                 System.err.println("Error al guardar la solución: " + e.getMessage());
             }
@@ -163,7 +169,7 @@ public class Main {
             System.out.println("╔════════════════════════════════════════════╗");
             System.out.println("║         INFORMACIÓN DE LA SOLUCIÓN         ║");
             System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println(bestSolution);
+            System.out.println(improvedSolution);
             System.out.println();
             
         } catch (IOException e) {

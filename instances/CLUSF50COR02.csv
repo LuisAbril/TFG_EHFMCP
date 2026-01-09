@@ -1,4 +1,4 @@
-Vehiculo,Carga,Num_v,Ef,Eo
+Vehicle,Load,Num_v,Ef,Eo
 V1,16000,3,0.931,0.586
 V2,8000,3,0.635,0.471
 V3,4180,1,0.389,0.316

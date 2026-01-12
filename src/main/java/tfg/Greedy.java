@@ -8,9 +8,9 @@ import java.util.*;
  */
 public class Greedy {
     // PARÁMETRO GRASP (MODIFICAR AQUÍ)
-    // alpha = 0.0 -> completamente greedy (siempre elige el mejor)
-    // alpha = 1.0 -> completamente aleatorio
-    private static final double ALPHA = 0.3;
+    // alpha = 0.0 -> completamente aleatorio
+    // alpha = 1.0 -> completamente greedy (siempre elige el mejor)
+    private static final double ALPHA =0.99;
     
     private Instance instance;
     
@@ -58,8 +58,8 @@ public class Greedy {
             double minQuality = Collections.min(nodeQualities.values());
             double maxQuality = Collections.max(nodeQualities.values());
             
-            // Calcular threshold usando GRASP
-            double threshold = minQuality + ALPHA * (maxQuality - minQuality);
+            // Calcular threshold usando GRASP (invertido: alpha=0 aleatorio, alpha=1 greedy)
+            double threshold = maxQuality - ALPHA * (maxQuality - minQuality);
             
             // Construir RCL (Restricted Candidate List) con nodos que cumplan threshold
             List<NodeData> rcl = new ArrayList<>();

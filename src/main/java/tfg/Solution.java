@@ -1,5 +1,8 @@
 package tfg;
 
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -122,16 +125,13 @@ public class Solution {
         double totalDist = 0.0;
         double totalEmissions = 0.0;
 
-        List<Map<String, String>> nodes = instance.getNodes();
-        List<Map<String, String>> vehicles = instance.getVehicles();
+        List<NodeData> nodes = instance.getNodes();
+        List<Vehicle> vehicles = instance.getVehicles();
         
         // Crear mapa de coordenadas para acceso rápido
-        Map<String, double[]> coordinates = new HashMap<>();
-        for (Map<String, String> node : nodes) {
-            String nodeName = node.get("Node");
-            double x = Double.parseDouble(node.get("coord_x"));
-            double y = Double.parseDouble(node.get("coord_y"));
-            coordinates.put(nodeName, new double[]{x, y});
+        Map<String, double[]> coordinates = new java.util.HashMap<>();
+        for (NodeData node : nodes) {
+            coordinates.put(node.getName(), new double[]{node.getX(), node.getY()});
         }
 
         // Para cada vehículo y su ruta, calcular distancia y emisiones
@@ -140,56 +140,51 @@ public class Solution {
             List<String> route = routeEntry.getValue();
 
             // Encontrar el vehículo en la instancia
-            Map<String, String> vehicleInfo = null;
-            for (Map<String, String> v : vehicles) {
-                if (v.get("Vehicle").equals(vehicleName)) {
+            Vehicle vehicleInfo = null;
+            for (Vehicle v : vehicles) {
+                if (vehicleName.equals(v.getName()) || vehicleName.startsWith(v.getName() + "_")) {
                     vehicleInfo = v;
                     break;
                 }
             }
 
             if (vehicleInfo != null) {
-                double Ef = Double.parseDouble(vehicleInfo.get("Ef"));
-                double Eo = Double.parseDouble(vehicleInfo.get("Eo"));
-                double capacity = Double.parseDouble(vehicleInfo.get("Load"));
+                double Ef = vehicleInfo.getEf();
+                double Eo = vehicleInfo.getEo();
+                double capacity = vehicleInfo.getLoad();
 
                 // Calcular distancia de la ruta (desde P a primer nodo, entre nodos, y volver a P)
                 if (!route.isEmpty()) {
-                    // Calcular el peso total que debe recoger este vehículo
-                    double totalWeight = 0.0;
-                    for (String nodeName : route) {
-                        totalWeight += getNodeProd(nodeName, nodes);
-                    }
+                    double load = 0.0;  // Carga actual del vehículo
+                    String prev = "P";  // Nodo anterior (empieza en planta)
                     
-                    // P a primer nodo (sale vacío, llega y recoge)
                     double[] depotCoords = coordinates.get("P");
-                    double[] firstNodeCoords = coordinates.get(route.get(0));
-                    double dPF = calculateDistance(depotCoords, firstNodeCoords);
-                    totalDist += dPF;
-                    // Sale vacío desde P: peso = 0
-                    totalEmissions += ((Ef - Eo) / capacity) * 0.0 * dPF + Eo * dPF;
                     
-                    // Peso acumulado después de recoger en el primer nodo
-                    double currentWeight = getNodeProd(route.get(0), nodes);
-
-                    // Entre nodos consecutivos
-                    for (int i = 0; i < route.size() - 1; i++) {
-                        double[] currentCoords = coordinates.get(route.get(i));
-                        double[] nextCoords = coordinates.get(route.get(i + 1));
-                        double dNN = calculateDistance(currentCoords, nextCoords);
-                        totalDist += dNN;
-                        // Viaja con el peso acumulado hasta ahora
-                        totalEmissions += ((Ef - Eo) / capacity) * currentWeight * dNN + Eo * dNN;
-                        // Después de visitar el siguiente nodo, acumula su peso
-                        currentWeight += getNodeProd(route.get(i + 1), nodes);
+                    // Recorrer todas las granjas de la ruta
+                    for (String node : route) {
+                        // Calcular distancia desde nodo anterior al actual
+                        double[] prevCoords = prev.equals("P") ? depotCoords : coordinates.get(prev);
+                        double[] currentCoords = coordinates.get(node);
+                        double distance = calculateDistance(prevCoords, currentCoords);
+                        
+                        totalDist += distance;
+                        
+                        // Calcular emisiones del tramo con la carga ACTUAL (antes de recoger)
+                        // Fórmula: (Eo + ((Ef - Eo) / capacity) * load) * distance
+                        totalEmissions += ((((Ef - Eo) / capacity) * load) + Eo ) * distance;
+                        
+                        // DESPUÉS de viajar, recoger la producción del nodo
+                        load += getNodeProd(node, nodes);
+                        prev = node;
                     }
-
-                    // Último nodo a P (vuelve con todo el peso recogido)
-                    double[] lastNodeCoords = coordinates.get(route.get(route.size() - 1));
-                    double dLP = calculateDistance(lastNodeCoords, depotCoords);
-                    totalDist += dLP;
-                    // Vuelve al depósito con todo el peso recogido
-                    totalEmissions += ((Ef - Eo) / capacity) * totalWeight * dLP + Eo * dLP;
+                    
+                    // Volver a P con la carga completa
+                    double[] lastCoords = coordinates.get(prev);
+                    double distanceToDepot = calculateDistance(lastCoords, depotCoords);
+                    totalDist += distanceToDepot;
+                    
+                    // Emisiones del tramo de vuelta con toda la carga recogida
+                    totalEmissions += ((((Ef - Eo) / capacity) * load) + Eo ) * distanceToDepot;
                 }
             }
         }
@@ -214,21 +209,35 @@ public class Solution {
     /**
      * Obtiene la producción/demanda del nodo por nombre.
      */
-    private double getNodeProd(String nodeName, List<Map<String, String>> nodes) {
-        for (Map<String, String> n : nodes) {
-            if (nodeName.equals(n.get("Node"))) {
-                String prodStr = n.get("prod");
-                if (prodStr == null || prodStr.isEmpty()) {
-                    return 0.0;
-                }
-                try {
-                    return Double.parseDouble(prodStr);
-                } catch (NumberFormatException e) {
-                    return 0.0;
-                }
+    private double getNodeProd(String nodeName, List<NodeData> nodes) {
+        for (NodeData n : nodes) {
+            if (nodeName.equals(n.getName())) {
+                return n.getProd();
             }
         }
         return 0.0;
+    }
+
+    /**
+     * Guarda la solución en un archivo de texto.
+     * 
+     * @param instanceName Nombre de la instancia (sin extensión)
+     * @throws IOException Si hay un error al escribir el archivo
+     */
+    public void saveToFile(String filePath) throws IOException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
+            // Escribir rutas de vehículos
+            for (Map.Entry<String, List<String>> entry : vehicleRoutes.entrySet()) {
+                String vehicle = entry.getKey();
+                List<String> route = entry.getValue();
+                writer.println(vehicle + "\t\t" + route);
+            }
+            
+            // Escribir métricas
+            writer.println();
+            writer.println("CO2\t\t" + String.format("%.7f", totalCO2));
+            writer.println("Distance\t" + String.format("%.6f", totalDistance));
+        }
     }
 
     @Override

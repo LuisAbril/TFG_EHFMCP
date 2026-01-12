@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -14,8 +13,8 @@ import java.util.Map;
  */
 public class Instance {
     private String fileName;
-    private List<Map<String, String>> vehicles;
-    private List<Map<String, String>> nodes;
+    private List<Vehicle> vehicles;
+    private List<NodeData> nodes;
     private String content;
 
     /**
@@ -94,21 +93,60 @@ public class Instance {
 
             // Procesar vehículos
             if (parsingVehicles && vehicleHeaders != null && !parts[0].trim().isEmpty()) {
-                Map<String, String> vehicle = new HashMap<>();
-                for (int i = 0; i < vehicleHeaders.length && i < parts.length; i++) {
-                    vehicle.put(vehicleHeaders[i].trim(), parts[i].trim());
-                }
-                vehicles.add(vehicle);
+                vehicles.add(parseVehicle(vehicleHeaders, parts));
             }
 
             // Procesar nodos
             if (parsingNodes && nodeHeaders != null && !parts[0].trim().isEmpty()) {
-                Map<String, String> node = new HashMap<>();
-                for (int i = 0; i < nodeHeaders.length && i < parts.length; i++) {
-                    node.put(nodeHeaders[i].trim(), parts[i].trim());
-                }
-                nodes.add(node);
+                nodes.add(parseNode(nodeHeaders, parts));
             }
+        }
+    }
+
+    private Vehicle parseVehicle(String[] headers, String[] parts) {
+        Map<String, String> tmp = new java.util.HashMap<>();
+        for (int i = 0; i < headers.length && i < parts.length; i++) {
+            tmp.put(headers[i].trim(), parts[i].trim());
+        }
+        String name = tmp.getOrDefault("Vehicle", "V");
+        double load = parseDoubleSafe(tmp.get("Load"));
+        int numUnits = parseIntSafe(tmp.get("Num_v"));
+        double ef = parseDoubleSafe(tmp.get("Ef"));
+        double eo = parseDoubleSafe(tmp.get("Eo"));
+        return new Vehicle(name, load, numUnits, ef, eo);
+    }
+
+    private NodeData parseNode(String[] headers, String[] parts) {
+        Map<String, String> tmp = new java.util.HashMap<>();
+        for (int i = 0; i < headers.length && i < parts.length; i++) {
+            tmp.put(headers[i].trim(), parts[i].trim());
+        }
+        String name = tmp.getOrDefault("Node", "");
+        double x = parseDoubleSafe(tmp.get("coord_x"));
+        double y = parseDoubleSafe(tmp.get("coord_y"));
+        double prod = parseDoubleSafe(tmp.get("prod"));
+        return new NodeData(name, x, y, prod);
+    }
+
+    private double parseDoubleSafe(String value) {
+        if (value == null || value.isEmpty()) {
+            return 0.0;
+        }
+        try {
+            return Double.parseDouble(value);
+        } catch (NumberFormatException e) {
+            return 0.0;
+        }
+    }
+
+    private int parseIntSafe(String value) {
+        if (value == null || value.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 0;
         }
     }
 
@@ -126,7 +164,7 @@ public class Instance {
      * 
      * @return Lista de mapas con información de vehículos
      */
-    public List<Map<String, String>> getVehicles() {
+    public List<Vehicle> getVehicles() {
         return new ArrayList<>(vehicles);
     }
 
@@ -135,7 +173,7 @@ public class Instance {
      * 
      * @return Lista de mapas con información de nodos
      */
-    public List<Map<String, String>> getNodes() {
+    public List<NodeData> getNodes() {
         return new ArrayList<>(nodes);
     }
 

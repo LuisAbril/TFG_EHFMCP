@@ -1,0 +1,5 @@
+Generar algoritmo voraz - formula grasp algorithm -> menor + alpha(decidido por nosotros) x (mayor-menor) = coger elementos >= a la solucion
+Hay que hacer con alpha 0, 0.25, 0.5, 0.75, 1 
+    -> para el greedy la calidad del nodo -> menor distancia y menor peso
+
+Usar como tiempo limite de un segundo en vez de iteraciones ( en todos los ejemplos)

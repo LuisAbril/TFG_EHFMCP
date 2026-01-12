@@ -1,0 +1,5 @@
+RandomConstructive:
+    - Genera una solucion completamente aleatoria, comprueba si es factible la solucion y en caso de que no lo sea, la elimina y genera otra
+
+LocalSearch:
+    - A la solucion introducida se le cambian las aristas para buscar una mejor solucion

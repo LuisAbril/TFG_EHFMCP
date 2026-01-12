@@ -224,10 +224,8 @@ public class Solution {
      * @param instanceName Nombre de la instancia (sin extensión)
      * @throws IOException Si hay un error al escribir el archivo
      */
-    public void saveToFile(String instanceName) throws IOException {
-        String fileName = instanceName + "_sol.txt";
-        
-        try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
+    public void saveToFile(String filePath) throws IOException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
             // Escribir rutas de vehículos
             for (Map.Entry<String, List<String>> entry : vehicleRoutes.entrySet()) {
                 String vehicle = entry.getKey();

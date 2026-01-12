@@ -11,11 +11,18 @@ import java.util.Scanner;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
+    private static final String SOLUTIONS_DIR = "instanceSolutions";
     
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         
         try {
+            // Crear la carpeta de soluciones si no existe
+            File solutionsFolder = new File(SOLUTIONS_DIR);
+            if (!solutionsFolder.exists()) {
+                solutionsFolder.mkdirs();
+            }
+            
             // Listar instancias disponibles
             List<String> availableInstances = listAvailableInstances();
             
@@ -103,7 +110,8 @@ public class Main {
                     
                     // Guardar la mejor solución en un archivo
                     try {
-                        bestSolution.saveToFile(instanceName);
+                        String solutionPath = SOLUTIONS_DIR + File.separator + instanceName + "_sol.txt";
+                        bestSolution.saveToFile(solutionPath);
                     } catch (IOException e) {
                         System.err.println("Error al guardar la solución: " + e.getMessage());
                     }

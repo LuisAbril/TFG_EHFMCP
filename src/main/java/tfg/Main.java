@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -12,11 +11,18 @@ import java.util.Scanner;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
+    private static final String SOLUTIONS_DIR = "instanceSolutions";
     
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         
         try {
+            // Crear la carpeta de soluciones si no existe
+            File solutionsFolder = new File(SOLUTIONS_DIR);
+            if (!solutionsFolder.exists()) {
+                solutionsFolder.mkdirs();
+            }
+            
             // Listar instancias disponibles
             List<String> availableInstances = listAvailableInstances();
             
@@ -26,97 +32,111 @@ public class Main {
                 return;
             }
             
-            System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║    INSTANCIAS DISPONIBLES                  ║");
-            System.out.println("╚════════════════════════════════════════════╝");
-            for (int i = 0; i < availableInstances.size(); i++) {
-                System.out.println((i + 1) + ". " + availableInstances.get(i));
-            }
-            System.out.println();
-            
-            // Solicitar nombre de la instancia
-            String instanceName = "";
-            boolean validInput = false;
-            
-            while (!validInput) {
-                System.out.print("Ingresa el nombre de la instancia (sin extensión): ");
-                instanceName = scanner.nextLine().trim();
-                
-                if (instanceName.isEmpty()) {
-                    System.out.println("El nombre no puede estar vacío.");
-                    continue;
+            // Solicitar número de iteraciones
+            int iterations = 100;
+            boolean validIterations = false;
+            while (!validIterations) {
+                System.out.print("Ingresa el número de iteraciones (default 100): ");
+                String iterInput = scanner.nextLine().trim();
+                if (iterInput.isEmpty()) {
+                    iterations = 100;
+                    validIterations = true;
+                } else {
+                    try {
+                        iterations = Integer.parseInt(iterInput);
+                        if (iterations < 1) {
+                            System.out.println("Las iteraciones deben ser al menos 1.");
+                            continue;
+                        }
+                        validIterations = true;
+                    } catch (NumberFormatException e) {
+                        System.out.println("Entrada inválida. Ingresa un número válido.");
+                    }
                 }
+            }
+            System.out.println();
+            
+            // Listas para almacenar resultados
+            List<String> instanceNames = new ArrayList<>();
+            List<Double> co2Results = new ArrayList<>();
+            List<Double> cpuTimeResults = new ArrayList<>();
+            
+            // Procesar todas las instancias
+            for (String instanceName : availableInstances) {
+                System.out.println("Procesando instancia: " + instanceName);
                 
-                if (!availableInstances.contains(instanceName)) {
-                    System.out.println("Instancia no encontrada. Intenta de nuevo.");
-                    continue;
+                try {
+                    // Cargar la instancia
+                    String filePath = INSTANCES_DIR + File.separator + instanceName + ".csv";
+                    Instance instance = new Instance(filePath);
+                    Solution.setInstance(instance);
+                    
+                    // Medir tiempo de CPU
+                    long startNanoTime = System.nanoTime();
+                    
+                    // Variables para rastrear la mejor solución global
+                    Solution bestSolution = null;
+                    double bestCO2 = Double.MAX_VALUE;
+                    double bestDistance = 0.0;
+                    LocalSearch localSearch = new LocalSearch();
+                    
+                    for (int iter = 1; iter <= iterations; iter++) {
+                        // Fase 1: Construcción Aleatoria
+                        RandomConstructive constructive = new RandomConstructive(instance);
+                        Solution initialSolution = constructive.run();
+                        double initialCO2 = initialSolution.getTotalCO2();
+                        
+                        // Fase 2: Búsqueda Local (2-Opt)
+                        Solution improvedSolution = localSearch.apply2Opt(initialSolution);
+                        double improvedCO2 = initialCO2;
+                        double improvedDistance = improvedSolution.getTotalDistance();
+                        
+                        // Verificar si es la mejor solución encontrada hasta ahora
+                        if (improvedCO2 < bestCO2) {
+                            bestCO2 = improvedCO2;
+                            bestDistance = improvedDistance;
+                            bestSolution = improvedSolution;
+                        }
+                    }
+                    
+                    // Calcular tiempo transcurrido
+                    long endNanoTime = System.nanoTime();
+                    double elapsedSeconds = (endNanoTime - startNanoTime) / 1_000_000_000.0;
+                    
+                    // Guardar resultados
+                    instanceNames.add(instanceName);
+                    co2Results.add(bestCO2);
+                    cpuTimeResults.add(elapsedSeconds);
+                    
+                    // Guardar la mejor solución en un archivo
+                    try {
+                        String solutionPath = SOLUTIONS_DIR + File.separator + instanceName + "_sol.txt";
+                        bestSolution.saveToFile(solutionPath);
+                    } catch (IOException e) {
+                        System.err.println("Error al guardar la solución: " + e.getMessage());
+                    }
+                    
+                } catch (IOException e) {
+                    System.err.println("Error al procesar instancia " + instanceName + ": " + e.getMessage());
                 }
-                
-                validInput = true;
+                System.out.println();
             }
             
-            // Cargar la instancia
-            String filePath = INSTANCES_DIR + File.separator + instanceName + ".csv";
-            Instance instance = new Instance(filePath);
-            
-            // Mostrar información de la instancia
+            // Mostrar resumen final
             System.out.println();
-            System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║       INFORMACIÓN DE LA INSTANCIA          ║");
-            System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println("Archivo: " + instance.getFileName());
-            System.out.println("Vehículos: " + instance.getNumberOfVehicles());
-            System.out.println("Nodos: " + instance.getNumberOfNodes());
-            System.out.println();
-            
-            // Mostrar información de vehículos
-            System.out.println("┌─ VEHÍCULOS ─────────────────────────────────┐");
-            List<Map<String, String>> vehicles = instance.getVehicles();
-            for (Map<String, String> vehicle : vehicles) {
-                System.out.println("├─ " + vehicle.get("Vehicle"));
-                System.out.println("│  ├─ Capacidad: " + vehicle.get("Load") + " kg");
-                System.out.println("│  ├─ Unidades: " + vehicle.get("Num_v"));
-                System.out.println("│  ├─ Emisiones lleno (Ef): " + vehicle.get("Ef"));
-                System.out.println("│  └─ Emisiones vacío (Eo): " + vehicle.get("Eo"));
+            System.out.println("CPU");
+            for (int i = 0; i < cpuTimeResults.size(); i++) {
+                System.out.println(String.format("%.3f", cpuTimeResults.get(i)));
             }
-            System.out.println("└─────────────────────────────────────────────┘");
-            System.out.println();
             
-            // Mostrar información de nodos
-            System.out.println("┌─ NODOS ─────────────────────────────────────┐");
-            List<Map<String, String>> nodes = instance.getNodes();
-            for (Map<String, String> node : nodes) {
-                String nodeName = node.get("Node");
-                String coordX = node.get("coord_x");
-                String coordY = node.get("coord_y");
-                String prod = node.get("prod");
-                
-                System.out.println("├─ " + nodeName);
-                System.out.println("│  ├─ Coordenadas: (" + coordX + ", " + coordY + ")");
-                System.out.println("│  └─ Producción/Demanda: " + prod);
+            System.out.println();
+            System.out.println("co2");
+            for (int i = 0; i < co2Results.size(); i++) {
+                System.out.println(String.format("%.7f", co2Results.get(i)));
             }
-            System.out.println("└─────────────────────────────────────────────┘");
             System.out.println();
             
-            // Establecer la instancia en Solution
-            Solution.setInstance(instance);
-            
-            // Crear el algoritmo de construcción aleatoria en este caso
-            RandomConstructive constructive = new RandomConstructive(instance);
-            
-            // Generar solución aleatoria y evaluarla
-            Solution solution = constructive.run();
-            
-            // Mostrar información de la solución
-            System.out.println("╔════════════════════════════════════════════╗");
-            System.out.println("║         INFORMACIÓN DE LA SOLUCIÓN         ║");
-            System.out.println("╚════════════════════════════════════════════╝");
-            System.out.println(solution);
-            System.out.println();
-            
-        } catch (IOException e) {
-            System.err.println("Error al leer el archivo: " + e.getMessage());
-            e.printStackTrace();
+        
         } finally {
             scanner.close();
         }

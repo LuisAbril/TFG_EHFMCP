@@ -11,7 +11,7 @@ import java.util.Scanner;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
-    private static final String SOLUTIONS_DIR = "instanceSolutions";
+    private static final String SOLUTIONS_DIR = "greedy2solutions0.99";
     
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);

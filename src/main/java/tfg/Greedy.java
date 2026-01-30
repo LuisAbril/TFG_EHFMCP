@@ -149,7 +149,7 @@ public class Greedy {
         
         // Calidad = distancia + producción (normalizado)
         // Menor distancia y menor producción = mejor calidad (menor valor)
-        double quality = distance + node.getProd()/100; // Normalizar producción
+        double quality = distance + node.getProd() / 100; // Normalizar producción
         
         return quality;
     }

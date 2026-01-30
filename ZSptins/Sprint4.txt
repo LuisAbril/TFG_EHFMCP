@@ -1,0 +1,10 @@
+Objetivo de este sprint:
+Sobre la mejor instancia, Hacer la siguiguiente tabla (mirar captura de pantalla)
+Consiste en:
+    Medir la convergencia de la instancia con sus iteraciones
+    Trata de por cada iteracion, tener guardado el mejor resultado (en caso de mejorar, se actualiza y tenemos el nuevo, en caso contrario, se mantiene el de siempre)
+    IMPOORTANTE!! Hace falta saber cuantas iteraciones necesitamos, un segundo es bastante impreciso, hay que tratar de que tengamos todo enumerado (aprox 1000 iteraciones???)
+
+
+Realizar presentación resumen indicando los avances de este proyecto
+ADEMAS no hace falta guardar estas soluciones  (MODIFICAR ARCHIVOS PARA ESTAR SOBREESCRIBIENDO TODO EL RATO LA MISMA CARPETA)

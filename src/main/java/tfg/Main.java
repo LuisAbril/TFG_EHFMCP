@@ -11,7 +11,7 @@ import java.util.Scanner;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
-    private static final String SOLUTIONS_DIR = "instanceSolutions";
+    private static final String SOLUTIONS_DIR = "greedy2solutions0.99";
     
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
@@ -32,29 +32,8 @@ public class Main {
                 return;
             }
             
-            // Solicitar número de iteraciones
-            int iterations = 100;
-            boolean validIterations = false;
-            while (!validIterations) {
-                System.out.print("Ingresa el número de iteraciones (default 100): ");
-                String iterInput = scanner.nextLine().trim();
-                if (iterInput.isEmpty()) {
-                    iterations = 100;
-                    validIterations = true;
-                } else {
-                    try {
-                        iterations = Integer.parseInt(iterInput);
-                        if (iterations < 1) {
-                            System.out.println("Las iteraciones deben ser al menos 1.");
-                            continue;
-                        }
-                        validIterations = true;
-                    } catch (NumberFormatException e) {
-                        System.out.println("Entrada inválida. Ingresa un número válido.");
-                    }
-                }
-            }
-            System.out.println();
+            // Tiempo límite de ejecución: 1 segundo
+            final long TIME_LIMIT_NANOS = 1_000_000_000L; // 1 segundo en nanosegundos
             
             // Listas para almacenar resultados
             List<String> instanceNames = new ArrayList<>();
@@ -79,16 +58,19 @@ public class Main {
                     double bestCO2 = Double.MAX_VALUE;
                     double bestDistance = 0.0;
                     LocalSearch localSearch = new LocalSearch();
+                    int iterationsCompleted = 0;
                     
-                    for (int iter = 1; iter <= iterations; iter++) {
-                        // Fase 1: Construcción Aleatoria
-                        RandomConstructive constructive = new RandomConstructive(instance);
-                        Solution initialSolution = constructive.run();
-                        double initialCO2 = initialSolution.getTotalCO2();
+                    // Ejecutar mientras no se supere 1 segundo
+                    while ((System.nanoTime() - startNanoTime) < TIME_LIMIT_NANOS) {
+                        iterationsCompleted++;
+                        
+                        // Fase 1: Construcción Greedy con GRASP
+                        Greedy greedy = new Greedy(instance);
+                        Solution initialSolution = greedy.run();
                         
                         // Fase 2: Búsqueda Local (2-Opt)
                         Solution improvedSolution = localSearch.apply2Opt(initialSolution);
-                        double improvedCO2 = initialCO2;
+                        double improvedCO2 = improvedSolution.getTotalCO2();
                         double improvedDistance = improvedSolution.getTotalDistance();
                         
                         // Verificar si es la mejor solución encontrada hasta ahora
@@ -97,6 +79,7 @@ public class Main {
                             bestDistance = improvedDistance;
                             bestSolution = improvedSolution;
                         }
+                        
                     }
                     
                     // Calcular tiempo transcurrido

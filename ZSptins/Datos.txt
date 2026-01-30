@@ -1,0 +1,26 @@
+RandomConstructive:
+    - Genera una solucion completamente aleatoria, comprueba si es factible la solucion y en caso de que no lo sea, la elimina y genera otra
+
+LocalSearch:
+    - A la solucion introducida se le cambian las aristas para buscar una mejor solucion
+
+Greedy (GRASP):
+    - Algoritmo voraz con componente aleatorio
+    - Calcula calidad de cada nodo: calidad = distancia + produccion/100
+    - Menor calidad = mejor (nodos mas cercanos con menor peso)
+    - Formula GRASP: threshold = min_calidad + alpha * (max_calidad - min_calidad)
+    - Construye RCL (Restricted Candidate List) con nodos que tengan calidad <= threshold
+    - Selecciona aleatoriamente un nodo de la RCL
+    - Asigna el nodo a un vehiculo factible aleatorio
+    - Parametro alpha (modificable en Main.java):
+        * alpha = 0.0 -> completamente greedy (siempre elige el mejor)
+        * alpha = 1.0 -> completamente aleatorio
+        * alpha = 0.3 -> valor por defecto (recomendado 0.2-0.5)
+
+Main:
+    - Procesa todas las instancias disponibles en la carpeta 'instances'
+    - Ejecuta algoritmo durante 1 segundo de CPU por instancia
+    - Fase 1: Construccion con Greedy GRASP
+    - Fase 2: Mejora con LocalSearch (2-Opt)
+    - Guarda mejores soluciones en carpeta 'instanceSolutions'
+    - Muestra resumen final: tiempos CPU y valores CO2

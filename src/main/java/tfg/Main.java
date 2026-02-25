@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 
 /**
  * Clase principal para demostrar el uso de Instance y Solution.
@@ -32,94 +34,108 @@ public class Main {
                 return;
             }
             
-            // Tiempo límite de ejecución: 1 segundo
-            final long TIME_LIMIT_NANOS = 1_000_000_000L; // 1 segundo en nanosegundos
+            // Mostrar instancias disponibles
+            System.out.println("Instancias disponibles:");
+            for (int i = 0; i < availableInstances.size(); i++) {
+                System.out.println((i + 1) + ". " + availableInstances.get(i));
+            }
             
-            // Listas para almacenar resultados
-            List<String> instanceNames = new ArrayList<>();
-            List<Double> co2Results = new ArrayList<>();
-            List<Double> cpuTimeResults = new ArrayList<>();
+            // Seleccionar instancia
+            System.out.print("\nSelecciona el número de la instancia a ejecutar: ");
+            int instanceChoice = -1;
+            try {
+                instanceChoice = scanner.nextInt();
+            } catch (java.util.InputMismatchException e) {
+                System.err.println("Error: Por favor ingresa un número válido.");
+                scanner.nextLine(); // Limpiar el buffer
+                scanner.close();
+                return;
+            }
             
-            // Procesar todas las instancias
-            for (String instanceName : availableInstances) {
-                System.out.println("Procesando instancia: " + instanceName);
+            if (instanceChoice < 1 || instanceChoice > availableInstances.size()) {
+                System.err.println("Opción inválida.");
+                scanner.close();
+                return;
+            }
+            
+            String selectedInstance = availableInstances.get(instanceChoice - 1);
+            
+            // Seleccionar número de iteraciones
+            System.out.print("¿Cuántas iteraciones deseas realizar?: ");
+            int iterations = -1;
+            try {
+                iterations = scanner.nextInt();
+            } catch (java.util.InputMismatchException e) {
+                System.err.println("Error: Por favor ingresa un número válido.");
+                scanner.nextLine(); // Limpiar el buffer
+                scanner.close();
+                return;
+            }
+            
+            if (iterations <= 0) {
+                System.err.println("El número de iteraciones debe ser mayor a 0.");
+                scanner.close();
+                return;
+            }
+            
+            StringBuilder co2Buffer = new StringBuilder();
+            
+            System.out.println("\nProcesando instancia: " + selectedInstance + " con " + iterations + " iteraciones...\n");
+            
+            System.out.println("MejorCO2");
+            
+            try {
+                // Cargar la instancia
+                String filePath = INSTANCES_DIR + File.separator + selectedInstance + ".csv";
+                Instance instance = new Instance(filePath);
+                Solution.setInstance(instance);
                 
-                try {
-                    // Cargar la instancia
-                    String filePath = INSTANCES_DIR + File.separator + instanceName + ".csv";
-                    Instance instance = new Instance(filePath);
-                    Solution.setInstance(instance);
-                    
+                LocalSearch localSearch = new LocalSearch();
+                
+                // Variables para rastrear la mejor solución
+                Solution bestSolution = null;
+                double bestCO2 = Double.MAX_VALUE;
+                double bestDistance = 0.0;
+                
+                // Ejecutar N iteraciones
+                for (int i = 1; i <= iterations; i++) {
                     // Medir tiempo de CPU
                     long startNanoTime = System.nanoTime();
                     
-                    // Variables para rastrear la mejor solución global
-                    Solution bestSolution = null;
-                    double bestCO2 = Double.MAX_VALUE;
-                    double bestDistance = 0.0;
-                    LocalSearch localSearch = new LocalSearch();
-                    int iterationsCompleted = 0;
+                    // Fase 1: Construcción Greedy con GRASP
+                    GRASP greedy = new GRASP(instance);
+                    Solution initialSolution = greedy.run();
                     
-                    // Ejecutar mientras no se supere 1 segundo
-                    while ((System.nanoTime() - startNanoTime) < TIME_LIMIT_NANOS) {
-                        iterationsCompleted++;
-                        
-                        // Fase 1: Construcción Greedy con GRASP
-                        Greedy greedy = new Greedy(instance);
-                        Solution initialSolution = greedy.run();
-                        
-                        // Fase 2: Búsqueda Local (2-Opt)
-                        Solution improvedSolution = localSearch.apply2Opt(initialSolution);
-                        double improvedCO2 = improvedSolution.getTotalCO2();
-                        double improvedDistance = improvedSolution.getTotalDistance();
-                        
-                        // Verificar si es la mejor solución encontrada hasta ahora
-                        if (improvedCO2 < bestCO2) {
-                            bestCO2 = improvedCO2;
-                            bestDistance = improvedDistance;
-                            bestSolution = improvedSolution;
-                        }
-                        
-                    }
+                    // Fase 2: Búsqueda Local (2-Opt)
+                    Solution improvedSolution = localSearch.apply2Opt(initialSolution);
                     
                     // Calcular tiempo transcurrido
                     long endNanoTime = System.nanoTime();
                     double elapsedSeconds = (endNanoTime - startNanoTime) / 1_000_000_000.0;
                     
-                    // Guardar resultados
-                    instanceNames.add(instanceName);
-                    co2Results.add(bestCO2);
-                    cpuTimeResults.add(elapsedSeconds);
+                    double currentCO2 = improvedSolution.getTotalCO2();
+                    double currentDistance = improvedSolution.getTotalDistance();
                     
-                    // Guardar la mejor solución en un archivo
-                    try {
-                        String solutionPath = SOLUTIONS_DIR + File.separator + instanceName + "_sol.txt";
-                        bestSolution.saveToFile(solutionPath);
-                    } catch (IOException e) {
-                        System.err.println("Error al guardar la solución: " + e.getMessage());
+                    // Verificar si es la mejor solución encontrada hasta ahora
+                    if (currentCO2 < bestCO2) {
+                        bestCO2 = currentCO2;
+                        bestDistance = currentDistance;
+                        bestSolution = improvedSolution;
                     }
                     
-                } catch (IOException e) {
-                    System.err.println("Error al procesar instancia " + instanceName + ": " + e.getMessage());
+                    // Imprimir la mejor solución encontrada hasta el momento
+                    String co2Line = String.format("%.0f", bestCO2);
+                    System.out.println(co2Line);
+                    co2Buffer.append(co2Line).append(System.lineSeparator());
                 }
-                System.out.println();
+                
+                // Copiar al portapapeles
+                Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new StringSelection(co2Buffer.toString()), null);
+            } catch (IOException e) {
+                System.err.println("Error al procesar instancia " + selectedInstance + ": " + e.getMessage());
             }
             
-            // Mostrar resumen final
-            System.out.println();
-            System.out.println("CPU");
-            for (int i = 0; i < cpuTimeResults.size(); i++) {
-                System.out.println(String.format("%.3f", cpuTimeResults.get(i)));
-            }
-            
-            System.out.println();
-            System.out.println("co2");
-            for (int i = 0; i < co2Results.size(); i++) {
-                System.out.println(String.format("%.7f", co2Results.get(i)));
-            }
-            System.out.println();
-            
-        
         } finally {
             scanner.close();
         }

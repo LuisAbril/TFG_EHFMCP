@@ -6,7 +6,7 @@ import java.util.*;
  * Algoritmo Greedy con GRASP para construir soluciones al problema VRP.
  * Utiliza una función de calidad basada en distancia y producción del nodo.
  */
-public class Greedy {
+public class GRASP {
     // PARÁMETRO GRASP (MODIFICAR AQUÍ)
     // alpha = 0.0 -> completamente aleatorio
     // alpha = 1.0 -> completamente greedy (siempre elige el mejor)
@@ -19,7 +19,7 @@ public class Greedy {
      * 
      * @param instance La instancia del problema
      */
-    public Greedy(Instance instance) {
+    public GRASP(Instance instance) {
         this.instance = instance;
     }
     
@@ -149,7 +149,7 @@ public class Greedy {
         
         // Calidad = distancia + producción (normalizado)
         // Menor distancia y menor producción = mejor calidad (menor valor)
-        double quality = distance + node.getProd()/100; // Normalizar producción
+        double quality = distance + node.getProd() / 100; // Normalizar producción
         
         return quality;
     }

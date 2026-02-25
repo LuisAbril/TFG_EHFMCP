@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 
 /**
  * Clase principal para demostrar el uso de Instance y Solution.
@@ -76,6 +78,8 @@ public class Main {
                 return;
             }
             
+            StringBuilder co2Buffer = new StringBuilder();
+            
             System.out.println("\nProcesando instancia: " + selectedInstance + " con " + iterations + " iteraciones...\n");
             
             System.out.println("MejorCO2");
@@ -99,7 +103,7 @@ public class Main {
                     long startNanoTime = System.nanoTime();
                     
                     // Fase 1: Construcción Greedy con GRASP
-                    Greedy greedy = new Greedy(instance);
+                    GRASP greedy = new GRASP(instance);
                     Solution initialSolution = greedy.run();
                     
                     // Fase 2: Búsqueda Local (2-Opt)
@@ -120,9 +124,14 @@ public class Main {
                     }
                     
                     // Imprimir la mejor solución encontrada hasta el momento
-                    System.out.println(String.format("%.0f", bestCO2));
+                    String co2Line = String.format("%.0f", bestCO2);
+                    System.out.println(co2Line);
+                    co2Buffer.append(co2Line).append(System.lineSeparator());
                 }
                 
+                // Copiar al portapapeles
+                Toolkit.getDefaultToolkit().getSystemClipboard()
+                    .setContents(new StringSelection(co2Buffer.toString()), null);
             } catch (IOException e) {
                 System.err.println("Error al procesar instancia " + selectedInstance + ": " + e.getMessage());
             }

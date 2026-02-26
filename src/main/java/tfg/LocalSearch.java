@@ -11,6 +11,30 @@ import java.util.Map;
 public class LocalSearch {
 
     /**
+     * Ejecuta ambas búsquedas locales (2-Opt e Inserción) y devuelve la mejor solución.
+     * El criterio de selección es menor CO2 total.
+     */
+    public Solution applyBothLocalSearch(Solution solution) {
+        Solution opt2Solution = apply2Opt(solution);
+        Solution insertionSolution = applyInsertion(solution);
+
+        double insertionCO2 = insertionSolution.getTotalCO2();
+        double opt2CO2 = opt2Solution.getTotalCO2();
+
+        if (insertionCO2 < opt2CO2) {
+            return insertionSolution;
+        }
+        if (insertionCO2 > opt2CO2) {
+            return opt2Solution;
+        }
+
+        if (insertionSolution.getTotalDistance() < opt2Solution.getTotalDistance()) {
+            return insertionSolution;
+        }
+        return opt2Solution;
+    }
+
+    /**
      * Aplica búsqueda local por inserción a cada ruta de la solución y devuelve una solución mejorada.
      * El criterio de mejora es reducir la distancia de la ruta.
      */

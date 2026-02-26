@@ -107,8 +107,8 @@ public class Main {
                     GRASP greedy = new GRASP(instance);
                     Solution initialSolution = greedy.run();
                     
-                    // Fase 2: Búsqueda Local (2-Opt)
-                    Solution improvedSolution = localSearch.apply2Opt(initialSolution);
+                    // Fase 2: Búsqueda Local (applyInsertion o apply2Opt)
+                    Solution improvedSolution = localSearch.applyInsertion(initialSolution);
                     
                     // Calcular tiempo transcurrido
                     long endNanoTime = System.nanoTime();

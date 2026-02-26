@@ -13,7 +13,7 @@ import java.awt.datatransfer.StringSelection;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
-    private static final String SOLUTIONS_DIR = "greedy1solutions0.99Insertion";
+    private static final String SOLUTIONS_DIR = "greedy1solutions0.99VND";
     private static final long EXECUTION_TIME_NS = 1_000_000_000L;
     
     public static void main(String[] args) {
@@ -56,8 +56,8 @@ public class Main {
                     GRASP greedy = new GRASP(instance);
                     Solution initialSolution = greedy.run();
                     
-                    // Fase 2: Búsqueda Local (2-Opt + Inserción, escoger mejor)
-                    Solution improvedSolution = localSearch.applyBothLocalSearch(initialSolution);
+                    // Fase 2: Búsqueda Local VND (Inserción -> 2-Opt)
+                    Solution improvedSolution = localSearch.applyVND(initialSolution);
                     
                     double currentCO2 = improvedSolution.getTotalCO2();
                     

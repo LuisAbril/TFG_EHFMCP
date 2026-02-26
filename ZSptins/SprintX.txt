@@ -10,8 +10,8 @@ Aumentar iteraciones para la gráfica
 Llevar a cabo cuantas iteraciones se realizan en un segundo
 
 Sustituir 2opt y cambiar por busqueda local de insercion y jugar con las mezclas
-Mecla entre busqeudas locales y me quedo con la mejor
-GRASP + ampliado
+Mecla entre busqeudas locales y me quedo con la mejor (done)
+GRASP + ampliado    
 
 
 Estrategia VND informarme un poco (vecindario de intercambio)

@@ -11,6 +11,34 @@ import java.util.Map;
 public class LocalSearch {
 
     /**
+     * Variable Neighborhood Descent (VND).
+     * Vecindarios usados en este orden: Inserción -> 2-Opt.
+     * Si un vecindario mejora, se reinicia desde el primero.
+     */
+    public Solution applyVND(Solution solution) {
+        Solution current = solution;
+        int neighborhoodIndex = 0;
+
+        while (neighborhoodIndex < 2) {
+            Solution candidate;
+            if (neighborhoodIndex == 0) {
+                candidate = applyInsertion(current);
+            } else {
+                candidate = apply2Opt(current);
+            }
+
+            if (isBetter(candidate, current)) {
+                current = candidate;
+                neighborhoodIndex = 0;
+            } else {
+                neighborhoodIndex++;
+            }
+        }
+
+        return current;
+    }
+
+    /**
      * Ejecuta ambas búsquedas locales (2-Opt e Inserción) y devuelve la mejor solución.
      * El criterio de selección es menor CO2 total.
      */
@@ -32,6 +60,18 @@ public class LocalSearch {
             return insertionSolution;
         }
         return opt2Solution;
+    }
+
+    private boolean isBetter(Solution candidate, Solution reference) {
+        double epsilon = 1e-9;
+        if (candidate.getTotalCO2() < reference.getTotalCO2() - epsilon) {
+            return true;
+        }
+        if (Math.abs(candidate.getTotalCO2() - reference.getTotalCO2()) <= epsilon
+                && candidate.getTotalDistance() < reference.getTotalDistance() - epsilon) {
+            return true;
+        }
+        return false;
     }
 
     /**

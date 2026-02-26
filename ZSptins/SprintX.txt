@@ -14,4 +14,4 @@ Mecla entre busqeudas locales y me quedo con la mejor (done)
 GRASP + ampliado    
 
 
-Estrategia VND informarme un poco (vecindario de intercambio)
+Estrategia VND informarme un poco (vecindario de intercambio) (done)

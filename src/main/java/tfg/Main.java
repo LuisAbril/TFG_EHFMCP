@@ -96,6 +96,7 @@ public class Main {
                 Solution bestSolution = null;
                 double bestCO2 = Double.MAX_VALUE;
                 double bestDistance = 0.0;
+                long totalStartNanoTime = System.nanoTime();
                 
                 // Ejecutar N iteraciones
                 for (int i = 1; i <= iterations; i++) {
@@ -128,6 +129,10 @@ public class Main {
                     System.out.println(co2Line);
                     co2Buffer.append(co2Line).append(System.lineSeparator());
                 }
+
+                long totalEndNanoTime = System.nanoTime();
+                double totalElapsedSeconds = (totalEndNanoTime - totalStartNanoTime) / 1_000_000_000.0;
+                System.out.printf("Tiempo total de ejecución: %.3f segundos%n", totalElapsedSeconds);
                 
                 // Copiar al portapapeles
                 Toolkit.getDefaultToolkit().getSystemClipboard()

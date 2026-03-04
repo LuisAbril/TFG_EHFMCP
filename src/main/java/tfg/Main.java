@@ -13,8 +13,8 @@ import java.awt.datatransfer.StringSelection;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
-    private static final String SOLUTIONS_DIR = "greedy1solutions0.99VND";
-    private static final long EXECUTION_TIME_NS = 1_000_000_000L;
+    private static final String SOLUTIONS_DIR = "greedy1solutions0.99VND10secs";
+    private static final long EXECUTION_TIME_NS = 30_000_000_000L;
     
     public static void main(String[] args) {
         // Crear la carpeta de soluciones si no existe
@@ -34,6 +34,8 @@ public class Main {
         Collections.sort(availableInstances);
         
         StringBuilder co2Buffer = new StringBuilder();
+        long totalIterations = 0;
+        int processedInstances = 0;
         
         for (String selectedInstance : availableInstances) {
             try {
@@ -47,6 +49,7 @@ public class Main {
                 // Variables para rastrear la mejor solución
                 double bestCO2 = Double.MAX_VALUE;
                 Solution bestSolution = null;
+                int instanceIterations = 0;
                 long totalStartNanoTime = System.nanoTime();
                 long endTime = totalStartNanoTime + EXECUTION_TIME_NS;
                 
@@ -58,6 +61,7 @@ public class Main {
                     
                     // Fase 2: Búsqueda Local VND (Inserción -> 2-Opt)
                     Solution improvedSolution = localSearch.applyVND(initialSolution);
+                    instanceIterations++;
                     
                     double currentCO2 = improvedSolution.getTotalCO2();
                     
@@ -73,6 +77,9 @@ public class Main {
                     bestSolution.saveToFile(solutionPath);
                 }
 
+                totalIterations += instanceIterations;
+                processedInstances++;
+
                 String resultLine = String.format("%.7f", bestCO2);
                 System.out.println(resultLine);
                 co2Buffer.append(resultLine).append(System.lineSeparator());
@@ -81,6 +88,13 @@ public class Main {
                 System.err.println(errorLine);
                 co2Buffer.append(errorLine).append(System.lineSeparator());
             }
+        }
+
+        if (processedInstances > 0) {
+            double averageIterations = (double) totalIterations / processedInstances;
+            String averageLine = String.format("%.2f", averageIterations);
+            System.out.println(averageLine);
+            co2Buffer.append(averageLine).append(System.lineSeparator());
         }
 
         Toolkit.getDefaultToolkit().getSystemClipboard()

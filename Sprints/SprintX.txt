@@ -1,0 +1,17 @@
+Llamar clase greedy como es debido GRASP 
+-RCL lista de candidatos elegidos dentro del GRASP
+-CL lista de candidatos
+
+
+
+!!!!!!!!!!!!
+
+Aumentar iteraciones para la gráfica
+Llevar a cabo cuantas iteraciones se realizan en un segundo
+
+Sustituir 2opt y cambiar por busqueda local de insercion y jugar con las mezclas
+Mecla entre busqeudas locales y me quedo con la mejor (done)
+GRASP + ampliado    
+
+
+Estrategia VND informarme un poco (vecindario de intercambio) (done)

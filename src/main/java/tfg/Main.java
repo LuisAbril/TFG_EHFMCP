@@ -13,8 +13,8 @@ import java.awt.datatransfer.StringSelection;
  */
 public class Main {
     private static final String INSTANCES_DIR = "instances";
-    private static final String SOLUTIONS_DIR = "greedy1solutions0.99VND10secs";
-    private static final long EXECUTION_TIME_NS = 30_000_000_000L;
+    private static final String SOLUTIONS_DIR = "greedy1solutions0.99VND180secs";
+    private static final long EXECUTION_TIME_NS = 180_000_000_000L;
     
     public static void main(String[] args) {
         // Crear la carpeta de soluciones si no existe
